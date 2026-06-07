@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Weather App</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				background: #f4f6f8;
+				margin: 0;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				min-height: 100vh;
+			}
+			.container {
+				background: white;
+				padding: 24px;
+				border-radius: 12px;
+				box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+				width: 400px;
+			}
+			h1 {
+				margin-top: 0;
+				font-size: 22px;
+				text-align: center;
+			}
+			label {
+				display: block;
+				margin: 12px 0 6px;
+				font-size: 14px;
+			}
+			select, button {
+				width: 100%;
+				padding: 10px;
+				border-radius: 8px;
+				border: 1px solid #ddd;
+				font-size: 14px;
+				box-sizing: border-box;
+			}
+			button {
+				margin-top: 12px;
+				background: #2563eb;
+				color: white;
+				border: none;
+				cursor: pointer;
+				transition: 0.2s;
+			}
+			button:hover {
+				background: #1e4fd6;
+			}
+			button:disabled {
+				background: #9ca3af;
+				cursor: not-allowed;
+			}
+			.weather-card {
+				margin-top: 16px;
+				padding: 14px;
+				border-radius: 10px;
+				background: #f9fafb;
+				box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+			}
+			.weather-temp {
+				font-size: 30px;
+				font-weight: bold;
+				margin-bottom: 10px;
+			}
+			.weather-grid {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 8px;
+				font-size: 13px;
+				color: #374151;
+			}
+			.weather-item {
+				background: white;
+				padding: 8px;
+				border-radius: 8px;
+				border: 1px solid #eee;
+			}
+			.error {
+				color: #dc2626;
+				font-weight: bold;
+				margin-top: 12px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>Weather App</h1>
+			<label>
+				Country
+				<select id="country" onchange="fillCities()">
+					<option value="PL">Poland</option>
+					<option value="FR">France</option>
+					<option value="KI">Kiribati</option>
+				</select>
+			</label>
+			<label>
+				City
+				<select id="city"></select>
+			</label>
+			<button id="button" onclick="checkWeather()">Check weather</button>
+			<div id="result" class="weather-card" style="display: none"></div>
+		</div>
+		<script>
+			const countryToCities = {
+			   PL: [
+				  { name: "Lublin", lat: 51.2465, lon: 22.5684 },
+				  { name: "Warsaw", lat: 52.2297, lon: 21.0122 },
+				  { name: "Gdansk", lat: 54.3520, lon: 18.6466 }
+			   ],
+			   FR: [
+				  { name: "Paris", lat: 48.8566, lon: 2.3522 },
+				  { name: "Marseille", lat: 43.2965, lon: 5.3698 },
+				  { name: "Lyon", lat: 45.7640, lon: 4.8357 }
+			   ],
+			   KI: [
+				  { name: "Kiritimati", lat: 1.8721, lon: -157.4278 },
+				  { name: "Poland", lat: 1.9849, lon: -157.4750 },
+				  { name: "Banana", lat: 0.4000, lon: 173.1300 }
+			   ]
+			};
+			function fillCities() {
+				city.innerHTML = "";
+				countryToCities[country.value].forEach(c =>
+				   city.add(new Option(c.name, `${c.lat},${c.lon}`))
+				);
+			}
+			async function checkWeather() {
+			   button.disabled = true;
+			   result.innerHTML = "Loading...";
+			   result.classList.remove("error");
+			   result.style.display = "block";
+			   try {
+				  const response = await fetch("/api?coords=" + encodeURIComponent(city.value));
+				  const data = await response.json();
+				  if (data.error) {
+					result.classList.add("error");
+					result.innerHTML = "Error: " + data.error + "!";
+					return;
+				  }
+				  result.innerHTML = `
+					<div class="weather-temp">${data.temperature}°C</div>
+					<div class="weather-grid">
+						<div class="weather-item">🌧️ Precipation: ${data.precipitation} mm</div>
+						<div class="weather-item">💨 Wind: ${data.wind} km/h</div>
+						<div class="weather-item">💧 Humidity: ${data.humidity}%</div>
+						<div class="weather-item">☁️ Cloud cover: ${data.cloud_cover}%</div>
+					</div>
+				  `;
+			   } catch (e) {
+				  result.classList.add("error");
+				  result.innerHTML = "Oops! Something went wrong.";
+			   } finally {
+				  button.disabled = false;
+			   }
+			}
+			fillCities();
+		</script>
+	</body>
+</html>
